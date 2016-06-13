@@ -4,6 +4,7 @@ import java.util.*;
 import java.lang.*;
 import java.io.*;
 
+/* Link class stores the valid moves solution */
 class Link {
     public int dir;
     public int[][] balls; // = new int[][] balls;
@@ -11,14 +12,6 @@ class Link {
     public int col;
     public Link nextLink;
 
-    //Link constructor
-    // public Link(int dir_, int row_, int col_) {
-	   // dir = dir_;
-	   // //balls = balls;
-	   // row = row_;
-	   // col = col_;
-    // }
-    
     public static int[][] deepCopyIntMatrix(int[][] input) {
     if (input == null)
         return null;
@@ -31,16 +24,19 @@ class Link {
 
     //Print Link data
     public void printLink() {
-	    System.out.print("{" + dir + "," + row + ","+ col+"}\n");
+	    //System.out.print("{" + dir + "," + row + ","+ col+"}\n");
+	    if(dir == 0) System.out.println("Fling! " + Fling.map[row][col]  +" UP");
+		else if(dir == 1) System.out.println("Fling! " + Fling.map[row][col]+ " DOWN");
+		else if(dir == 2) System.out.println("Fling! " + Fling.map[row][col] + " LEFT");
+		else if(dir == 3) System.out.println("Fling! " + Fling.map[row][col] + " RIGHT");
 	    /*for(int i=0;i<8;i++){
 	    		for(int j=0;j<7;j++){
 	    			System.out.print(" "+balls[i][j]+" ");
 	    		}	
 	    		System.out.println();
-	    }*/
-	    
-	    		
+	    }*/		
     }
+    
 }
 
 class LinkList {
@@ -67,28 +63,23 @@ class LinkList {
 	    l.dir = dir;
 	    return l;
     }
-    
+    //Insert co-ordinates
     public Link insert_cord(Link l, int r, int c){
     	l.row=r;
     	l.col=c;
     	return l;
     }
     
+    //Insert array - to trace the movements of balls
     public Link insert_array(Link l,int[][]balls_c){
     	l.balls=l.deepCopyIntMatrix(balls_c);
     	return l;
     }
-    //Deletes the link at the first of the list
-    public Link delete() {
-	    Link temp = first;
-	    first = first.nextLink;
-	    return temp;
-    }
-
-    //Prints list data
+    
+    //Prints balls traced movemnets and postion on applymove
     public void printList() {
 	    Link currentLink = first;
-	    System.out.print("List: ");
+	    //System.out.print("List: ");
 	    while(currentLink != null) {
 		    currentLink.printLink();
 		    currentLink = currentLink.nextLink;
@@ -96,7 +87,6 @@ class LinkList {
 	    System.out.println("");
     }
 } 
-
 
 /* Name of the class has to be "Main" only if the class is public. */
 class Fling
@@ -113,6 +103,7 @@ class Fling
 	int[] solution;
 	LinkList solutionSteps = new LinkList();
 	static int[][]  balls = new int[ROWS][COLS];
+	static char[][] map = new char[ROWS][COLS];
 	/* int[][] balls = {
 					{0,0,0,1,0,0,0}, 
 					{0,0,0,0,0,0,0}, 
@@ -123,23 +114,26 @@ class Fling
 					{0,0,0,0,0,1,0},
 					{0,0,1,0,1,0,0}}; */
 	public void solve(){
-	
 	/* for(int i=0; i<ROWS; i++) {
-      for(int j=0; j<COLS; j++)
-        System.out.print(balls[i][j] + " ");
-      System.out.println();
+      		for(int j=0; j<COLS; j++)
+        		System.out.print(balls[i][j] + " ");
+      	   System.out.println();
     } */
+    /*check if sum of ball zero */
     if(sumBalls(balls) == 0) System.out.println("No balls placed" + sumBalls(balls));
-    else if(depthFirst(balls) == false){
+    else if(MoveRecursive(balls) == false){
         System.out.println("no solution found");
     }
         else {
-            System.out.println("soultion found");
+            //System.out.println("soultion found");
+            /* if solution found print linked list which has trace of valid movements dir, row, cols */
             solutionSteps.printList();
         }
     
 	}
-	
+	/*method: to count number of balls in ball[][]
+	@param:  balls[][]  array of balls
+	@return: 	    count number*/
 	public int sumBalls(int balls[][]){
 	    int add=0;
 	    for(int i=0;i<ROWS;i++)
@@ -149,39 +143,31 @@ class Fling
 	return add;
 	}
 	
-	boolean depthFirst(int balls[][]){
-		count++;
-		System.out.println(count);
+	/*method: recursive method to find every possible move recusively in array/ board balls[][]
+	@param:  balls[][]  array of balls
+	@return: 	    true: if balls count in array = 1 
+				    else perform recursive solution and finally if moves not possible return false */
+	boolean MoveRecursive(int balls[][]){
 	    if(sumBalls(balls) == 1) return true;
 	    for(int i = 0;i<ROWS;i++){
 			for(int j = 0;j<COLS;j++){
 				if(balls[i][j] == 1){
 					for(int dir=UP;dir<ALLDIR;dir++){
-						
-						if(isNextActionPossible(balls,i,j,dir)){
-						   	
-							int[][] move = testNextMove(balls,i,j,dir);
-	
-							/*Object solutionSteps = new Object();
-							solutionSteps.dir = dir;
-							solutionSteps.balls = move;
-							*/
-							
+						/* test if there a ball to move at position (r,c) ? for all possible 4 direction */
+						if(getEntry(balls,i,j,dir)){
+						   	/*can this ball move in direction dir ? and returns the new instance of balls of array*/
+							int[][] move = canMove(balls,i,j,dir);
 							int temp_dir = dir;
 							//int temp_array;
-							
-							if(move != null){
-								if(depthFirst(move)){
-									
+							if(move != null){ // Imp: to check move case: returned null when balls fopund in adjacent in appymove()
+								if(MoveRecursive(move)){ 
+									/* save the trace in linked list */
 									Link l = solutionSteps.newnode();
 									l=solutionSteps.insert_dir(l,temp_dir);
 									//l=solutionSteps.insert_array(l,move);
 									l=solutionSteps.insert_cord(l, i , j);
-									dir = l.dir;
-									
-									//solution.splice(0,0,l);
-									
-									return true;
+									dir = l.dir;									
+								return true;
 								}
 								else{dir = temp_dir;} 
 							}
@@ -196,8 +182,13 @@ class Fling
 	}
 	return false;
 	}
-	
-	public boolean isNextActionPossible(int[][] balls,int i,int j, int dir){
+	/*method: is there a ball to move at possible position ?
+	@param:  balls[][]  array of balls
+	@param:  i 	rows index
+	@param:  j 	column index
+	@param:  dir  	direction code
+	@return: 	 true if balls has ball in their corresponding  rows or columns else entry false*/
+	public boolean getEntry(int[][] balls,int i,int j, int dir){
 		// checks at the four direction and returns if it can move.
 	if(dir == ALLDIR){
 		for(int k = 0;k<ROWS;k++)
@@ -239,10 +230,10 @@ class Fling
 	return false;
 	}
 	
-	public int[][] testNextMove(int[][] balls, int i , int j, int dir){
+	public int[][] canMove(int[][] balls, int i , int j, int dir){
 		int direction = dir;
 		int[][] clonedballs = deepCopyIntMatrix(balls);
-		return nextMove(clonedballs, i, j, direction, true);
+		return applyNextMove(clonedballs, i, j, direction, true);
 	}
 	
 	public static int[][] deepCopyIntMatrix(int[][] input) {
@@ -255,7 +246,14 @@ class Fling
 	    return result;
 	}
 	
-	public int[][] nextMove(int[][] balls,int i, int j, int dir, boolean firstMove){
+	/*method: make ball move to next possible position. Also record this move in history stored in newB
+	@param:  balls[][]  array of balls
+	@param:  i 	rows index
+	@param:  j 	column index
+	@param:  dir  	direction code
+	@param   firstmove we pass true for first call after that false
+	@return: 	    array of new balls after the moves*/
+	public int[][] applyNextMove(int[][] balls,int i, int j, int dir, boolean firstMove){
 		if(dir == UP){
 		if(firstMove){
 			if(balls[i-1][j] ==1) return null;
@@ -270,7 +268,7 @@ class Fling
 				if(nextBall != -1){
 					balls[i][j] = 0;
 					balls[nextBall+1][j] = 1;
-					return nextMove(balls,nextBall,j,dir, false);
+					return applyNextMove(balls,nextBall,j,dir, false);
 				}
 				else return null;
 			}
@@ -281,15 +279,15 @@ class Fling
 				return balls;
 			}
 			else if(balls[i-1][j] == 1){
-				return nextMove(balls,i-1,j,dir, false);
+				return applyNextMove(balls,i-1,j,dir, false);
 			}
 			else{
-				if(!isNextActionPossible(balls, i, j, dir)){
+				if(!getEntry(balls, i, j, dir)){
 					balls[i][j] = 0;
 					return balls;
 				}
 				else{
-					return nextMove(balls,i,j,dir, true);
+					return applyNextMove(balls,i,j,dir, true);
 				}
 			}
 		}
@@ -308,7 +306,7 @@ class Fling
 				if(nextBall != -1){
 					balls[i][j] = 0;
 					balls[nextBall-1][j] = 1;
-					return nextMove(balls,nextBall,j,dir, false);
+					return applyNextMove(balls,nextBall,j,dir, false);
 				}
 				else return null;
 			}
@@ -319,15 +317,15 @@ class Fling
 				return balls;
 			}
 			else if(balls[i+1][j] == 1){
-				return nextMove(balls,i+1,j,dir, false);
+				return applyNextMove(balls,i+1,j,dir, false);
 			}
 			else{
-				if(!isNextActionPossible(balls, i, j, dir)){
+				if(!getEntry(balls, i, j, dir)){
 					balls[i][j] = 0;
 					return balls;
 				}
 				else{
-					return nextMove(balls,i,j,dir, true);
+					return applyNextMove(balls,i,j,dir, true);
 				}
 			}
 		}
@@ -346,7 +344,7 @@ class Fling
 				if(nextBall != -1){
 					balls[i][j] = 0;
 					balls[i][nextBall-1] = 1;
-					return nextMove(balls,i,nextBall,dir, false);
+					return applyNextMove(balls,i,nextBall,dir, false);
 				}
 				else return null;
 			}
@@ -357,15 +355,15 @@ class Fling
 				return balls;
 			}
 			else if(balls[i][j+1] == 1){
-				return nextMove(balls,i,j+1,dir, false);
+				return applyNextMove(balls,i,j+1,dir, false);
 			}
 			else{
-				if(!isNextActionPossible(balls, i, j, dir)){
+				if(!getEntry(balls, i, j, dir)){
 					balls[i][j] = 1;
 					return balls;
 				}
 				else{
-					return nextMove(balls,i,j,dir, true);
+					return applyNextMove(balls,i,j,dir, true);
 				}
 			}
 		}
@@ -384,7 +382,7 @@ class Fling
 				if(nextBall != -1){
 					balls[i][j] = 0;
 					balls[i][nextBall+1] = 1;
-					return nextMove(balls,i,nextBall,dir, false);
+					return applyNextMove(balls,i,nextBall,dir, false);
 				}
 				else return null;
 			}
@@ -395,15 +393,15 @@ class Fling
 				return balls;
 			}
 			else if(balls[i][j-1] == 1){
-				return nextMove(balls,i,j-1,dir, false);
+				return applyNextMove(balls,i,j-1,dir, false);
 			}
 			else{
-				if(!isNextActionPossible(balls, i, j, dir)){
+				if(!getEntry(balls, i, j, dir)){
 					balls[i][j] = 0;
 					return balls;
 				}
 				else{
-					return nextMove(balls,i,j,dir, true);
+					return applyNextMove(balls,i,j,dir, true);
 				}
 			}
 		}
@@ -415,7 +413,7 @@ class Fling
 	public static void main (String[] args) throws java.lang.Exception
 	{
 		// your code goes here
-		char[][] map = new char[ROWS][COLS];
+		
 		Scanner sc = new Scanner(System.in);
 		String data = "";
 		int count = 0;
